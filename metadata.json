@@ -1,0 +1,6 @@
+{
+  "name": "网络设备智能配置平台",
+  "description": "集中化网络设备管理与智能配置系统，涵盖设备清单、配置模板、固件升级、网络实时监控、权限分配及审计日志",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
