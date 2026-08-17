@@ -17,8 +17,7 @@ export type NavTab =
   | "firmware"
   | "monitoring"
   | "users"
-  | "audit"
-  | "help";
+  | "audit";
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -29,6 +28,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
+  userRole,
 }) => {
   const menuItems = [
     {
@@ -66,12 +66,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "系统审计日志",
       icon: ShieldCheck,
     },
-    {
-      id: "help" as NavTab,
-      label: "系统操作手册",
-      icon: HelpCircle,
-    },
   ];
+
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.id === "users") {
+      return userRole === "SUPER_ADMIN";
+    }
+    return true;
+  });
 
   return (
     <aside className="w-64 bg-slate-900 flex flex-col h-full text-slate-300 shrink-0">
@@ -85,14 +87,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation List */}
       <nav className="flex-1 px-4 space-y-1 mt-2 overflow-y-auto">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all text-sm font-medium text-left ${
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all text-sm font-medium text-left cursor-pointer ${
                 isActive
                   ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:bg-slate-800 hover:text-white"

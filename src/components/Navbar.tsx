@@ -4,7 +4,6 @@ import {
   Shield,
   Bell,
   LogOut,
-  HelpCircle,
   X,
   Lock,
   Search,
@@ -13,14 +12,13 @@ import {
 interface NavbarProps {
   currentUser: User | null;
   onLogout: () => void;
-  onOpenHelp: () => void;
+  onOpenHelp?: () => void;
   activeTabTitle: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onLogout,
-  onOpenHelp,
   activeTabTitle,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -56,16 +54,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           />
           <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
         </div>
-
-        {/* Manual Button */}
-        <button
-          onClick={onOpenHelp}
-          className="flex items-center space-x-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-all"
-          title="打开系统操作手册"
-        >
-          <HelpCircle className="w-4 h-4 text-indigo-500" />
-          <span className="hidden sm:inline">操作手册</span>
-        </button>
 
         {/* Notifications Dropdown */}
         <div className="relative">

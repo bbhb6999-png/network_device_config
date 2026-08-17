@@ -34,8 +34,8 @@ import { AuditLogs } from "./components/AuditLogs";
 import { AiDiagnosisModal } from "./components/AiDiagnosisModal";
 
 export default function App() {
-  // Current Authentication State
-  const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USERS[0]); // Default logged in as Super Admin for easy preview
+  // Current Authentication State (defaults to null to display login screen first)
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<string>("overview");
 
   // Core Data States
@@ -278,7 +278,6 @@ export default function App() {
       <Navbar
         currentUser={currentUser}
         onLogout={handleLogout}
-        onOpenHelp={() => setActiveTab("help")}
         activeTabTitle={
           activeTab === "overview"
             ? "系统概览"
@@ -292,9 +291,7 @@ export default function App() {
             ? "实时网络监控"
             : activeTab === "users"
             ? "用户权限管理"
-            : activeTab === "audit"
-            ? "系统审计日志"
-            : "操作手册"
+            : "系统审计日志"
         }
       />
 
@@ -365,14 +362,32 @@ export default function App() {
           )}
 
           {activeTab === "users" && (
-            <UserManagement
-              users={users}
-              currentUser={currentUser}
-              onAddUser={handleAddUser}
-              onEditUser={handleEditUser}
-              onToggleUserStatus={handleToggleUserStatus}
-              onDeleteUser={handleDeleteUser}
-            />
+            currentUser.role === "SUPER_ADMIN" ? (
+              <UserManagement
+                users={users}
+                currentUser={currentUser}
+                onAddUser={handleAddUser}
+                onEditUser={handleEditUser}
+                onToggleUserStatus={handleToggleUserStatus}
+                onDeleteUser={handleDeleteUser}
+              />
+            ) : (
+              <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-200 text-center space-y-4 max-w-lg mx-auto mt-12">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto font-bold text-lg border border-rose-100">
+                  !
+                </div>
+                <h3 className="text-base font-bold text-slate-800">访问受限</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  “用户权限管理”模块仅对系统超级管理员（SUPER_ADMIN）开放。当前账号权限不足。
+                </p>
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  返回控制面板
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === "audit" && (
@@ -381,36 +396,6 @@ export default function App() {
               userRole={currentUser.role}
               onClearLogs={handleClearAuditLogs}
             />
-          )}
-
-          {activeTab === "help" && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800">系统操作手册与帮助指引</h2>
-                  <p className="text-xs text-slate-500 mt-1">智能网络设备配置平台操作规格说明与常用指南</p>
-                </div>
-                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full border border-indigo-100">v3.5 标准版</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-600">
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <h3 className="font-bold text-slate-800 text-sm">1. 设备管理与配置下发</h3>
-                  <p>在“设备清单管理”查看节点状态。进入“配置模板库”选择相应厂商模板（如华为、思科、华三），填入全局参数后一键推送 CLI 脚本。</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <h3 className="font-bold text-slate-800 text-sm">2. AI 故障智能诊断</h3>
-                  <p>点击任何异常或预警设备的“AI 诊断”按钮，系统将调用 Gemini 大语言模型解析丢包、内存过高或 ACL 冲突原因并给出可执行解决命令。</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <h3 className="font-bold text-slate-800 text-sm">3. 固件版本平滑升级与回滚</h3>
-                  <p>支持管理 BootROM / TOS 镜像。如刷写后出现校验错误，可使用“一键平滑回滚”恢复上个稳定版本。</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                  <h3 className="font-bold text-slate-800 text-sm">4. 操作安全审计与合规</h3>
-                  <p>所有的配置下发、固件升级、账号冻结及删除高危行为均实时记录并防篡改，可随时导出 ISO/IEC 27001 审计报告。</p>
-                </div>
-              </div>
-            </div>
           )}
         </main>
       </div>

@@ -1,26 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User } from "../types";
 import { INITIAL_USERS } from "../data/mockData";
 import {
   Server,
   Lock,
   User as UserIcon,
-  Shield,
-  CheckCircle2,
   AlertCircle,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 
 interface LoginPageProps {
-  onLoginSuccess: (user: User) => void;
+  onLogin?: (user: User) => void;
+  onLoginSuccess?: (user: User) => void;
+  users?: User[];
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
-  const [username, setUsername] = useState("admin");
+export const LoginPage: React.FC<LoginPageProps> = ({
+  onLogin,
+  onLoginSuccess,
+  users = INITIAL_USERS,
+}) => {
+  const userList = users && users.length > 0 ? users : INITIAL_USERS;
+  const [selectedUsername, setSelectedUsername] = useState(userList[0]?.username || "admin");
   const [password, setPassword] = useState("Admin@2026!");
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loginCallback = onLogin || onLoginSuccess || (() => {});
+
+  // Update selectedUsername if userList changes
+  useEffect(() => {
+    if (!userList.some((u) => u.username === selectedUsername)) {
+      setSelectedUsername(userList[0]?.username || "admin");
+    }
+  }, [userList, selectedUsername]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,92 +41,109 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setIsSubmitting(true);
 
     setTimeout(() => {
-      const foundUser = INITIAL_USERS.find(
-        (u) => u.username.toLowerCase() === username.trim().toLowerCase()
+      const foundUser = userList.find(
+        (u) => u.username.toLowerCase() === selectedUsername.trim().toLowerCase()
       );
 
       if (foundUser) {
         if (foundUser.status === "disabled") {
-          setErrorMsg("账号已被禁用，请联系超级管理员");
+          setErrorMsg("该账号已被冻结/禁用，请联系超级管理员解冻");
           setIsSubmitting(false);
           return;
         }
         setIsSubmitting(false);
-        onLoginSuccess(foundUser);
+        loginCallback(foundUser);
       } else {
-        setErrorMsg("用户名或密码不正确，请重新输入");
+        setErrorMsg("所选账号不存在或密码不匹配，请核对后重试");
         setIsSubmitting(false);
       }
-    }, 600);
+    }, 400);
   };
 
-  const handleQuickLogin = (demoUser: User) => {
-    setUsername(demoUser.username);
-    setPassword("123456");
-    setErrorMsg("");
-    onLoginSuccess(demoUser);
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "SUPER_ADMIN":
+        return "超级管理员";
+      case "NETWORK_ENGINEER":
+        return "运维工程师";
+      case "AUDITOR":
+        return "安全审计员";
+      case "GUEST":
+        return "访客观察员";
+      default:
+        return role;
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Subtle decorative background gradient */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-200/40 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10 backdrop-blur-md">
+      <div className="max-w-md w-full bg-white border border-slate-200/80 rounded-2xl shadow-xl p-8 relative z-10">
         {/* Logo & Heading */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-cyan-500/20">
-            <Server className="w-8 h-8 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-md shadow-indigo-600/20 text-white">
+            <Server className="w-7 h-7" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-white mb-1">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800 mb-1.5">
             网络设备智能配置平台
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 leading-relaxed">
             企业级网络自动化配置、设备监控与安全管控系统
           </p>
         </div>
 
         {/* Error Notification */}
         {errorMsg && (
-          <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="mb-6 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              用户名 / 系统账号
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              登录账号
             </label>
             <div className="relative">
-              <UserIcon className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="请输入用户名"
-                className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-              />
+              <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={selectedUsername}
+                onChange={(e) => {
+                  setSelectedUsername(e.target.value);
+                  setErrorMsg("");
+                }}
+                className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl py-2.5 pl-10 pr-8 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer appearance-none"
+              >
+                {userList.map((user) => (
+                  <option key={user.id} value={user.username}>
+                    {user.name} (@{user.username}) - {getRoleLabel(user.role)}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+                ▼
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               登录口令 / 密码
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="请输入密码"
-                className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                placeholder="请输入登录密码"
+                className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
               />
             </div>
           </div>
@@ -121,44 +151,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer mt-6"
           >
             {isSubmitting ? (
               <span className="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
             ) : (
               <>
-                <span>安全的系统登录</span>
+                <span>安全登录系统</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
-        {/* Quick Demo Login Preset Roles */}
-        <div className="mt-8 pt-6 border-t border-slate-800/80">
-          <p className="text-[11px] font-semibold text-slate-400 mb-3 text-center">
-            演示账号快速一键切换 (选择不同身份体验功能)
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {INITIAL_USERS.map((user) => (
-              <button
-                key={user.id}
-                onClick={() => handleQuickLogin(user)}
-                className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 text-left transition-all hover:border-cyan-500/50 group"
-              >
-                <div className="font-semibold text-xs text-slate-200 group-hover:text-cyan-400">
-                  {user.name}
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono">
-                  角色: {user.role === "SUPER_ADMIN" ? "超级管理员" : user.role === "NETWORK_ENGINEER" ? "运维工程师" : user.role === "AUDITOR" ? "安全审计员" : "访客"}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Footer info */}
-        <p className="text-[10px] text-slate-500 text-center mt-6">
+        <p className="text-[10px] text-slate-400 text-center mt-8 pt-4 border-t border-slate-100">
           © 2026 网络设备智能配置平台. 保留所有权利.
         </p>
       </div>
